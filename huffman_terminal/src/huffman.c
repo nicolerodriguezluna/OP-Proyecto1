@@ -78,14 +78,23 @@ int main() {
         printf("\n✗ Error en la descompresión (texto diferente al original).\n");
     }
 
-    // 7. Liberar memoria
+    // 7. Liberar memoria - ORDEN CORRECTO
+    // Primero liberar la tabla de códigos
     for (int i = 0; i < TAM_MAX; i++) {
-        free(tabla_codigos[i]);
+        if (tabla_codigos[i] != NULL) {
+            free(tabla_codigos[i]);
+        }
     }
+    
+    // Liberar textos comprimido y descomprimido
     free(texto_comprimido);
     free(texto_descomprimido);
+    
+    // Liberar el árbol (esto libera todos los nodos)
     liberar_arbol(raiz);
-    liberar_lista_nodos(&lista_nodos);
+
+    // Liberar el array de punteros de la lista
+    free(lista_nodos.nodos);
 
     return 0;
 }
