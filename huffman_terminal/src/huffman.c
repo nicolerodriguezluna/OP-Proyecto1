@@ -93,8 +93,5 @@ int main() {
     // Liberar el árbol (esto libera todos los nodos)
     liberar_arbol(raiz);
 
-    // Liberar el array de punteros de la lista
-    free(lista_nodos.nodos);
-
     return 0;
 }
