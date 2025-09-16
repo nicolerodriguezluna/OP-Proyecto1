@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "huffman.h"
+#include <string.h>
 #include "../include/arbol.h"
 #include "../include/frecuencias.h"
 
@@ -106,4 +106,84 @@ void liberarArbol(struct Nodo* nodo) {
     liberarArbol(nodo->izquierda);
     liberarArbol(nodo->derecha);
     free(nodo);
+}
+
+/**
+ * Genera los códigos de Huffman para cada carácter recursivamente.
+ */
+void generarCodigosHuffman(struct Nodo* raiz, char* codigo, int profundidad, char** tabla) {
+    if (raiz == NULL) return;
+    
+    // Si es un nodo hoja, guardar el código
+    if (raiz->izquierda == NULL && raiz->derecha == NULL) {
+        codigo[profundidad] = '\0';
+        tabla[raiz->caracter] = strdup(codigo);
+        return;
+    }
+    
+    // Recorrer izquierda (agregar '0')
+    codigo[profundidad] = '0';
+    generarCodigosHuffman(raiz->izquierda, codigo, profundidad + 1, tabla);
+    
+    // Recorrer derecha (agregar '1')
+    codigo[profundidad] = '1';
+    generarCodigosHuffman(raiz->derecha, codigo, profundidad + 1, tabla);
+}
+
+/**
+ * Comprime texto usando la tabla de códigos de Huffman.
+ */
+char* comprimirTexto(const char* texto, char** tabla) {
+    int longitudOriginal = strlen(texto);
+    int longitudComprimida = 0;
+    
+    // Calcular longitud del texto comprimido
+    for (int i = 0; i < longitudOriginal; i++) {
+        unsigned char c = texto[i];
+        if (tabla[c] != NULL) {
+            longitudComprimida += strlen(tabla[c]);
+        }
+    }
+    
+    // Asignar memoria para el texto comprimido
+    char* textoComprimido = (char*)malloc(longitudComprimida + 1);
+    textoComprimido[0] = '\0';
+    
+    // Construir texto comprimido
+    for (int i = 0; i < longitudOriginal; i++) {
+        unsigned char c = texto[i];
+        if (tabla[c] != NULL) {
+            strcat(textoComprimido, tabla[c]);
+        }
+    }
+    
+    return textoComprimido;
+}
+
+/**
+ * Descomprime texto usando el árbol de Huffman.
+ */
+char* descomprimirTexto(struct Nodo* raiz, const char* textoComprimido) {
+    int longitudComprimida = strlen(textoComprimido);
+    char* textoOriginal = (char*)malloc(LARGO_TEXTO_MAX);
+    int indiceOriginal = 0;
+    
+    struct Nodo* actual = raiz;
+    
+    for (int i = 0; i < longitudComprimida; i++) {
+        if (textoComprimido[i] == '0') {
+            actual = actual->izquierda;
+        } else if (textoComprimido[i] == '1') {
+            actual = actual->derecha;
+        }
+        
+        // Si es un nodo hoja, agregar carácter al texto original
+        if (actual->izquierda == NULL && actual->derecha == NULL) {
+            textoOriginal[indiceOriginal++] = actual->caracter;
+            actual = raiz; // Volver a la raíz para el próximo carácter
+        }
+    }
+    
+    textoOriginal[indiceOriginal] = '\0';
+    return textoOriginal;
 }
