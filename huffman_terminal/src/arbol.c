@@ -7,7 +7,7 @@
 /**
  * Encuentra los dos nodos con las frecuencias más bajas en una lista.
  */
-void encontrarDosMinimos(struct ListaNodos lista, int* min1, int* min2) {
+void encontrar_dos_minimos(struct ListaNodos lista, int* min1, int* min2) {
     *min1 = 0;
     *min2 = 1;
     if (lista.nodos[0]->frecuencia > lista.nodos[1]->frecuencia) {
@@ -27,49 +27,49 @@ void encontrarDosMinimos(struct ListaNodos lista, int* min1, int* min2) {
 /**
  * Construye el árbol de Huffman a partir de una lista de nodos.
  */
-struct Nodo* construirArbolHuffman(struct ListaNodos listaInicial) {
-    struct ListaNodos listaActual = listaInicial;
-    while (listaActual.cantidad > 1) {
+struct Nodo* construir_arbol_huffman(struct ListaNodos lista_inicial) {
+    struct ListaNodos lista_actual = lista_inicial;
+    while (lista_actual.cantidad > 1) {
         int min1, min2;
-        encontrarDosMinimos(listaActual, &min1, &min2);
+        encontrar_dos_minimos(lista_actual, &min1, &min2);
         
-        struct Nodo* nuevo = nuevoNodo(0, 
-            listaActual.nodos[min1]->frecuencia + listaActual.nodos[min2]->frecuencia);
-        nuevo->izquierda = listaActual.nodos[min1];
-        nuevo->derecha = listaActual.nodos[min2];
+        struct Nodo* nuevo = nuevo_nodo(0, 
+            lista_actual.nodos[min1]->frecuencia + lista_actual.nodos[min2]->frecuencia);
+        nuevo->izquierda = lista_actual.nodos[min1];
+        nuevo->derecha = lista_actual.nodos[min2];
         
         // Crear nueva lista sin los dos mínimos y con el nuevo nodo
-        struct ListaNodos nuevaLista;
-        nuevaLista.cantidad = listaActual.cantidad - 1;
-        nuevaLista.nodos = (struct Nodo**)malloc(nuevaLista.cantidad * sizeof(struct Nodo*));
+        struct ListaNodos nueva_lista;
+        nueva_lista.cantidad = lista_actual.cantidad - 1;
+        nueva_lista.nodos = (struct Nodo**)malloc(nueva_lista.cantidad * sizeof(struct Nodo*));
         
         int j = 0;
-        for (int i = 0; i < listaActual.cantidad; i++) {
+        for (int i = 0; i < lista_actual.cantidad; i++) {
             if (i != min1 && i != min2) {
-                nuevaLista.nodos[j] = listaActual.nodos[i];
+                nueva_lista.nodos[j] = lista_actual.nodos[i];
                 j++;
             }
         }
-        nuevaLista.nodos[j] = nuevo;
+        nueva_lista.nodos[j] = nuevo;
         
         // Liberar solo el arreglo de la lista actual (los nodos se conservan en el árbol)
-        free(listaActual.nodos);
-        listaActual = nuevaLista;
+        free(lista_actual.nodos);
+        lista_actual = nueva_lista;
     }
     
-    struct Nodo* raiz = listaActual.nodos[0];
-    free(listaActual.nodos); // Liberar el arreglo final
+    struct Nodo* raiz = lista_actual.nodos[0];
+    free(lista_actual.nodos); // Liberar el arreglo final
     return raiz;
 }
 
 /**
  * Imprime el árbol de Huffman con indentación para mostrar la estructura.
  */
-void imprimirArbol(struct Nodo* raiz, int nivel) {
+void imprimir_arbol(struct Nodo* raiz, int nivel) {
     if (raiz == NULL) return;
     
     for (int i = 0; i < nivel; i++) {
-        printf("  ");
+        printf("   ");
     }
     
     if (raiz->caracter == 0) {
@@ -82,7 +82,7 @@ void imprimirArbol(struct Nodo* raiz, int nivel) {
         } else if (c == '\t') {
             printf("Hoja: 'TAB' (ASCII: %d) - Frecuencia: %d\n", c, raiz->frecuencia);
         } else if (c == '\n') {
-            printf("Hoja: 'NUEVA_LÍNEA' (ASCII: %d) - Frecuencia: %d\n", c, raiz->frecuencia);
+            printf("Hoja: 'NUEVA_LINEA' (ASCII: %d) - Frecuencia: %d\n", c, raiz->frecuencia);
         } else if (c == '\r') {
             printf("Hoja: 'RETORNO_CARRO' (ASCII: %d) - Frecuencia: %d\n", c, raiz->frecuencia);
         } else if (c < 32 || c == 127) {
@@ -94,24 +94,24 @@ void imprimirArbol(struct Nodo* raiz, int nivel) {
         }
     }
     
-    imprimirArbol(raiz->izquierda, nivel + 1);
-    imprimirArbol(raiz->derecha, nivel + 1);
+    imprimir_arbol(raiz->izquierda, nivel + 1);
+    imprimir_arbol(raiz->derecha, nivel + 1);
 }
 
 /**
  * Libera la memoria del árbol de Huffman.
  */
-void liberarArbol(struct Nodo* nodo) {
+void liberar_arbol(struct Nodo* nodo) {
     if (nodo == NULL) return;
-    liberarArbol(nodo->izquierda);
-    liberarArbol(nodo->derecha);
+    liberar_arbol(nodo->izquierda);
+    liberar_arbol(nodo->derecha);
     free(nodo);
 }
 
 /**
  * Genera los códigos de Huffman para cada carácter recursivamente.
  */
-void generarCodigosHuffman(struct Nodo* raiz, char* codigo, int profundidad, char** tabla) {
+void generar_codigos_huffman(struct Nodo* raiz, char* codigo, int profundidad, char** tabla) {
     if (raiz == NULL) return;
     
     // Si es un nodo hoja, guardar el código
@@ -123,67 +123,67 @@ void generarCodigosHuffman(struct Nodo* raiz, char* codigo, int profundidad, cha
     
     // Recorrer izquierda (agregar '0')
     codigo[profundidad] = '0';
-    generarCodigosHuffman(raiz->izquierda, codigo, profundidad + 1, tabla);
+    generar_codigos_huffman(raiz->izquierda, codigo, profundidad + 1, tabla);
     
     // Recorrer derecha (agregar '1')
     codigo[profundidad] = '1';
-    generarCodigosHuffman(raiz->derecha, codigo, profundidad + 1, tabla);
+    generar_codigos_huffman(raiz->derecha, codigo, profundidad + 1, tabla);
 }
 
 /**
  * Comprime texto usando la tabla de códigos de Huffman.
  */
-char* comprimirTexto(const char* texto, char** tabla) {
-    int longitudOriginal = strlen(texto);
-    int longitudComprimida = 0;
+char* comprimir_texto(const char* texto, char** tabla) {
+    int longitud_original = strlen(texto);
+    int longitud_comprimida = 0;
     
     // Calcular longitud del texto comprimido
-    for (int i = 0; i < longitudOriginal; i++) {
+    for (int i = 0; i < longitud_original; i++) {
         unsigned char c = texto[i];
         if (tabla[c] != NULL) {
-            longitudComprimida += strlen(tabla[c]);
+            longitud_comprimida += strlen(tabla[c]);
         }
     }
     
     // Asignar memoria para el texto comprimido
-    char* textoComprimido = (char*)malloc(longitudComprimida + 1);
-    textoComprimido[0] = '\0';
+    char* texto_comprimido = (char*)malloc(longitud_comprimida + 1);
+    texto_comprimido[0] = '\0';
     
     // Construir texto comprimido
-    for (int i = 0; i < longitudOriginal; i++) {
+    for (int i = 0; i < longitud_original; i++) {
         unsigned char c = texto[i];
         if (tabla[c] != NULL) {
-            strcat(textoComprimido, tabla[c]);
+            strcat(texto_comprimido, tabla[c]);
         }
     }
     
-    return textoComprimido;
+    return texto_comprimido;
 }
 
 /**
  * Descomprime texto usando el árbol de Huffman.
  */
-char* descomprimirTexto(struct Nodo* raiz, const char* textoComprimido) {
-    int longitudComprimida = strlen(textoComprimido);
-    char* textoOriginal = (char*)malloc(LARGO_TEXTO_MAX);
-    int indiceOriginal = 0;
+char* descomprimir_texto(struct Nodo* raiz, const char* texto_comprimido) {
+    int longitud_comprimida = strlen(texto_comprimido);
+    char* texto_original = (char*)malloc(LARGO_TEXTO_MAX);
+    int indice_original = 0;
     
     struct Nodo* actual = raiz;
     
-    for (int i = 0; i < longitudComprimida; i++) {
-        if (textoComprimido[i] == '0') {
+    for (int i = 0; i < longitud_comprimida; i++) {
+        if (texto_comprimido[i] == '0') {
             actual = actual->izquierda;
-        } else if (textoComprimido[i] == '1') {
+        } else if (texto_comprimido[i] == '1') {
             actual = actual->derecha;
         }
         
         // Si es un nodo hoja, agregar carácter al texto original
         if (actual->izquierda == NULL && actual->derecha == NULL) {
-            textoOriginal[indiceOriginal++] = actual->caracter;
+            texto_original[indice_original++] = actual->caracter;
             actual = raiz; // Volver a la raíz para el próximo carácter
         }
     }
     
-    textoOriginal[indiceOriginal] = '\0';
-    return textoOriginal;
+    texto_original[indice_original] = '\0';
+    return texto_original;
 }

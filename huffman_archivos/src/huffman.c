@@ -17,62 +17,62 @@ int main() {
     texto[strcspn(texto, "\n")] = 0;
 
     // 1. Contar frecuencias
-    contarFrecuencias(texto, frecuencias);
+    contar_frecuencias(texto, frecuencias);
 
     // 2. Crear lista de nodos
-    struct ListaNodos listaNodos = crearListaNodos(frecuencias);
+    struct ListaNodos lista_nodos = crear_lista_nodos(frecuencias);
 
     // 3. Construir árbol de Huffman
-    struct Nodo* raiz = construirArbolHuffman(listaNodos);
+    struct Nodo* raiz = construir_arbol_huffman(lista_nodos);
     
     // Imprimir el árbol
     printf("\nÁrbol de Huffman (estructura):\n");
-    imprimirArbol(raiz, 0);
+    imprimir_arbol(raiz, 0);
 
     // 4. Generar códigos de Huffman
-    char* tablaCodigos[TAM_MAX] = {NULL};
-    char codigoActual[TAM_MAX];
-    generarCodigosHuffman(raiz, codigoActual, 0, tablaCodigos);
+    char* tabla_codigos[TAM_MAX] = {NULL};
+    char codigo_actual[TAM_MAX];
+    generar_codigos_huffman(raiz, codigo_actual, 0, tabla_codigos);
     
     // Mostrar tabla de códigos
     printf("\nTabla de códigos de Huffman:\n");
     for (int i = 0; i < TAM_MAX; i++) {
-        if (tablaCodigos[i] != NULL) {
+        if (tabla_codigos[i] != NULL) {
             unsigned char c = i;
             if (c == ' ') {
-                printf("'ESPACIO': %s\n", tablaCodigos[i]);
+                printf("'ESPACIO': %s\n", tabla_codigos[i]);
             } else if (c == '\t') {
-                printf("'TAB': %s\n", tablaCodigos[i]);
+                printf("'TAB': %s\n", tabla_codigos[i]);
             } else if (c == '\n') {
-                printf("'NUEVA_LÍNEA': %s\n", tablaCodigos[i]);
+                printf("'NUEVA_LINEA': %s\n", tabla_codigos[i]);
             } else if (c < 32 || c == 127) {
-                printf("'CTRL' (ASCII %d): %s\n", c, tablaCodigos[i]);
+                printf("'CTRL' (ASCII %d): %s\n", c, tabla_codigos[i]);
             } else if (c >= 128) {
-                printf("'EXT' (ASCII %d): %s\n", c, tablaCodigos[i]);
+                printf("'EXT' (ASCII %d): %s\n", c, tabla_codigos[i]);
             } else {
-                printf("'%c': %s\n", c, tablaCodigos[i]);
+                printf("'%c': %s\n", c, tabla_codigos[i]);
             }
         }
     }
 
     // 5. Comprimir y mostrar el resultado
-    char* textoComprimido = comprimirTexto(texto, tablaCodigos);
-    printf("\nTexto comprimido:\n%s\n", textoComprimido);
+    char* texto_comprimido = comprimir_texto(texto, tabla_codigos);
+    printf("\nTexto comprimido:\n%s\n", texto_comprimido);
     
     // Calcular y mostrar tasa de compresión
-    int longitudOriginal = strlen(texto);
-    int longitudComprimida = strlen(textoComprimido);
-    float tasaCompresion = (1 - (float)longitudComprimida / (longitudOriginal * 8)) * 100;
-    printf("\nTasa de compresión: %.2f%%\n", tasaCompresion);
-    printf("Longitud original: %d bits\n", longitudOriginal * 8);
-    printf("Longitud comprimida: %d bits\n", longitudComprimida);
+    int longitud_original = strlen(texto);
+    int longitud_comprimida = strlen(texto_comprimido);
+    float tasa_compresion = (1 - (float)longitud_comprimida / (longitud_original * 8)) * 100;
+    printf("\nTasa de compresión: %.2f%%\n", tasa_compresion);
+    printf("Longitud original: %d bits\n", longitud_original * 8);
+    printf("Longitud comprimida: %d bits\n", longitud_comprimida);
 
     // 6. Descomprimir y mostrar el resultado
-    char* textoDescomprimido = descomprimirTexto(raiz, textoComprimido);
-    printf("\nTexto descomprimido:\n%s\n", textoDescomprimido);
+    char* texto_descomprimido = descomprimir_texto(raiz, texto_comprimido);
+    printf("\nTexto descomprimido:\n%s\n", texto_descomprimido);
     
     // Verificar integridad
-    if (strcmp(texto, textoDescomprimido) == 0) {
+    if (strcmp(texto, texto_descomprimido) == 0) {
         printf("\n✓ La descompresión fue exitosa (texto idéntico al original).\n");
     } else {
         printf("\n✗ Error en la descompresión (texto diferente al original).\n");
@@ -80,12 +80,12 @@ int main() {
 
     // 7. Liberar memoria
     for (int i = 0; i < TAM_MAX; i++) {
-        free(tablaCodigos[i]);
+        free(tabla_codigos[i]);
     }
-    free(textoComprimido);
-    free(textoDescomprimido);
-    liberarArbol(raiz);
-    liberarListaNodos(&listaNodos);
+    free(texto_comprimido);
+    free(texto_descomprimido);
+    liberar_arbol(raiz);
+    liberar_lista_nodos(&lista_nodos);
 
     return 0;
 }

@@ -3,12 +3,12 @@
 
 #include "huffman.h"
 
-void encontrarDosMinimos(struct ListaNodos lista, int* min1, int* min2);
-struct Nodo* construirArbolHuffman(struct ListaNodos listaInicial);
-void imprimirArbol(struct Nodo* raiz, int nivel);
-void liberarArbol(struct Nodo* nodo);
-void generarCodigosHuffman(struct Nodo* raiz, char* codigo, int profundidad, char** tabla);
-char* comprimirTexto(const char* texto, char** tabla);
-char* descomprimirTexto(struct Nodo* raiz, const char* textoComprimido);
+void encontrar_dos_minimos(struct ListaNodos lista, int* min1, int* min2);
+struct Nodo* construir_arbol_huffman(struct ListaNodos lista_inicial);
+void imprimir_arbol(struct Nodo* raiz, int nivel);
+void liberar_arbol(struct Nodo* nodo);
+void generar_codigos_huffman(struct Nodo* raiz, char* codigo, int profundidad, char** tabla);
+char* comprimir_texto(const char* texto, char** tabla);
+char* descomprimir_texto(struct Nodo* raiz, const char* texto_comprimido);
 
 #endif
