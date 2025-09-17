@@ -9,11 +9,24 @@
 int main() {
     setlocale(LC_ALL, "");
 
-    char texto[LARGO_TEXTO_MAX];
-    int frecuencias[TAM_MAX];
+    // Leer texto de forma dinámica
+    printf("Por favor, introduce el texto que deseas analizar:\n");
+    
+    size_t buffer_size = 1024;
+    char* texto = malloc(buffer_size);
+    size_t texto_length = 0;
+    int c;
+    
+    while ((c = getchar()) != EOF && c != '\n') {
+        texto[texto_length++] = c;
+        if (texto_length >= buffer_size) {
+            buffer_size *= 2;
+            texto = realloc(texto, buffer_size);
+        }
+    }
+    texto[texto_length] = '\0';
 
-    printf("Por favor, introduce el texto que deseas analizar (máximo %d caracteres):\n", LARGO_TEXTO_MAX - 1);
-    fgets(texto, LARGO_TEXTO_MAX, stdin);
+    int frecuencias[TAM_MAX];
     texto[strcspn(texto, "\n")] = 0;
 
     // 1. Contar frecuencias
@@ -68,7 +81,7 @@ int main() {
     printf("Longitud comprimida: %d bits\n", longitud_comprimida);
 
     // 6. Descomprimir y mostrar el resultado
-    char* texto_descomprimido = descomprimir_texto(raiz, texto_comprimido);
+    char* texto_descomprimido = descomprimir_texto(raiz, texto_comprimido, texto_length);
     printf("\nTexto descomprimido:\n%s\n", texto_descomprimido);
     
     // Verificar integridad
@@ -78,20 +91,14 @@ int main() {
         printf("\n✗ Error en la descompresión (texto diferente al original).\n");
     }
 
-    // 7. Liberar memoria - ORDEN CORRECTO
-    // Primero liberar la tabla de códigos
+    // 7. Liberar memoria
     for (int i = 0; i < TAM_MAX; i++) {
-        if (tabla_codigos[i] != NULL) {
-            free(tabla_codigos[i]);
-        }
+        free(tabla_codigos[i]);
     }
-    
-    // Liberar textos comprimido y descomprimido
     free(texto_comprimido);
     free(texto_descomprimido);
-    
-    // Liberar el árbol (esto libera todos los nodos)
     liberar_arbol(raiz);
+    liberar_lista_nodos(&lista_nodos);
 
     return 0;
 }
