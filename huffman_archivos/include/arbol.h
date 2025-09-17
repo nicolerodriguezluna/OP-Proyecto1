@@ -9,7 +9,7 @@ void imprimir_arbol(struct Nodo* raiz, int nivel);
 void liberar_arbol(struct Nodo* nodo);
 void generar_codigos_huffman(struct Nodo* raiz, char* codigo, int profundidad, char** tabla);
 char* comprimir_texto(const char* texto, char** tabla);
-char* descomprimir_texto(struct Nodo* raiz, const char* texto_comprimido);
+char* descomprimir_texto(struct Nodo* raiz, const char* texto_comprimido, long tamaño_esperado);
 int serializar_arbol(struct Nodo* raiz, FILE* archivo);
 struct Nodo* deserializar_arbol(FILE* archivo);
 

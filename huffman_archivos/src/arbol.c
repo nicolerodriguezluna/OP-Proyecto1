@@ -163,28 +163,70 @@ char* comprimir_texto(const char* texto, char** tabla) {
 /**
  * Descomprime texto usando el árbol de Huffman.
  */
-char* descomprimir_texto(struct Nodo* raiz, const char* texto_comprimido) {
+char* descomprimir_texto(struct Nodo* raiz, const char* texto_comprimido, long tamaño_esperado) {
+    if (!raiz || !texto_comprimido) {
+        return NULL;
+    }
+
     int longitud_comprimida = strlen(texto_comprimido);
-    char* texto_original = (char*)malloc(LARGO_TEXTO_MAX);
-    int indice_original = 0;
     
+    // Asignar memoria para el texto original basado en el tamaño esperado
+    char* texto_original = (char*)malloc(tamaño_esperado + 1);
+    if (!texto_original) {
+        printf("Error de memoria para texto original (tamaño: %ld)\n", tamaño_esperado);
+        return NULL;
+    }
+    
+    int indice_original = 0;
     struct Nodo* actual = raiz;
     
     for (int i = 0; i < longitud_comprimida; i++) {
         if (texto_comprimido[i] == '0') {
+            if (!actual->izquierda) {
+                printf("Error: nodo no tiene hijo izquierdo\n");
+                free(texto_original);
+                return NULL;
+            }
             actual = actual->izquierda;
         } else if (texto_comprimido[i] == '1') {
+            if (!actual->derecha) {
+                printf("Error: nodo no tiene hijo derecho\n");
+                free(texto_original);
+                return NULL;
+            }
             actual = actual->derecha;
+        } else {
+            printf("Error: carácter inválido en texto comprimido: %c\n", texto_comprimido[i]);
+            free(texto_original);
+            return NULL;
         }
         
         // Si es un nodo hoja, agregar carácter al texto original
         if (actual->izquierda == NULL && actual->derecha == NULL) {
+            if (indice_original >= tamaño_esperado) {
+                printf("Error: texto descomprimido excede el tamaño esperado (%ld)\n", tamaño_esperado);
+                free(texto_original);
+                return NULL;
+            }
+            
             texto_original[indice_original++] = actual->caracter;
             actual = raiz; // Volver a la raíz para el próximo carácter
         }
     }
     
+    // Verificar que terminamos en la raíz
+    if (actual != raiz) {
+        printf("Advertencia: texto comprimido no terminó en un nodo hoja\n");
+    }
+    
     texto_original[indice_original] = '\0';
+    
+    // Verificar que descomprimimos exactamente el tamaño esperado
+    if (indice_original != tamaño_esperado) {
+        printf("Advertencia: tamaño descomprimido (%d) no coincide con el esperado (%ld)\n", 
+               indice_original, tamaño_esperado);
+    }
+    
     return texto_original;
 }
 
@@ -210,38 +252,78 @@ void serializar_arbol_recursivo(struct Nodo* raiz, FILE* archivo) {
     }
 }
 
-// Serializar el árbol de Huffman
-int serializar_arbol(struct Nodo* raiz, FILE* archivo) {
-    if (!raiz || !archivo) return 0;
-    serializar_arbol_recursivo(raiz, archivo);
-    return 1;
-}
-
 // Función auxiliar para deserializar el árbol recursivamente
 struct Nodo* deserializar_arbol_recursivo(FILE* archivo) {
     unsigned char marcador;
-    fread(&marcador, sizeof(unsigned char), 1, archivo);
+    if (fread(&marcador, sizeof(unsigned char), 1, archivo) != 1) {
+        printf("Error leyendo marcador del árbol\n");
+        return NULL;
+    }
     
     if (marcador == 0) {
         return NULL;
     } else if (marcador == 1) {
         // Nodo hoja
         unsigned char caracter;
-        fread(&caracter, sizeof(unsigned char), 1, archivo);
-        return nuevo_nodo(caracter, 0); // La frecuencia no se guarda/recupera
+        if (fread(&caracter, sizeof(unsigned char), 1, archivo) != 1) {
+            printf("Error leyendo caracter del árbol\n");
+            return NULL;
+        }
+        return nuevo_nodo(caracter, 0);
     } else if (marcador == 2) {
         // Nodo interno
         struct Nodo* nodo = nuevo_nodo(0, 0);
         nodo->izquierda = deserializar_arbol_recursivo(archivo);
         nodo->derecha = deserializar_arbol_recursivo(archivo);
+        
+        // Verificar que ambos hijos se crearon correctamente
+        if (!nodo->izquierda || !nodo->derecha) {
+            printf("Error al crear nodos hijos\n");
+            liberar_arbol(nodo);
+            return NULL;
+        }
+        
         return nodo;
+    } else {
+        printf("Marcador inválido: %d\n", marcador);
+        return NULL;
+    }
+}
+
+// Serializar el árbol de Huffman
+int serializar_arbol(struct Nodo* raiz, FILE* archivo) {
+    if (!raiz || !archivo) {
+        printf("Error: parámetros inválidos para serializar_arbol\n");
+        return 0;
+    }
+    serializar_arbol_recursivo(raiz, archivo);
+    
+    // Escribir marcador de finalización
+    unsigned char marcador_fin = 255;
+    if (fwrite(&marcador_fin, sizeof(unsigned char), 1, archivo) != 1) {
+        printf("Error al escribir marcador de finalización\n");
+        return 0;
     }
     
-    return NULL;
+    return 1;
 }
 
 // Deserializar el árbol de Huffman
 struct Nodo* deserializar_arbol(FILE* archivo) {
-    if (!archivo) return NULL;
-    return deserializar_arbol_recursivo(archivo);
+    if (!archivo) {
+        printf("Error: archivo inválido para deserializar_arbol\n");
+        return NULL;
+    }
+    
+    struct Nodo* raiz = deserializar_arbol_recursivo(archivo);
+    
+    // Verificar marcador de finalización
+    unsigned char marcador_fin;
+    if (fread(&marcador_fin, sizeof(unsigned char), 1, archivo) != 1 || marcador_fin != 255) {
+        printf("Error: marcador de finalización no encontrado\n");
+        liberar_arbol(raiz);
+        return NULL;
+    }
+    
+    return raiz;
 }

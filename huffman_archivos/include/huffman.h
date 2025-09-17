@@ -2,7 +2,6 @@
 #define HUFFMAN_H
 
 #define TAM_MAX 256
-#define LARGO_TEXTO_MAX 1000
 
 // Nodo del árbol de Huffman
 struct Nodo {
