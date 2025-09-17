@@ -187,3 +187,61 @@ char* descomprimir_texto(struct Nodo* raiz, const char* texto_comprimido) {
     texto_original[indice_original] = '\0';
     return texto_original;
 }
+
+// Función auxiliar para serializar el árbol recursivamente
+void serializar_arbol_recursivo(struct Nodo* raiz, FILE* archivo) {
+    if (raiz == NULL) {
+        unsigned char marcador = 0;
+        fwrite(&marcador, sizeof(unsigned char), 1, archivo);
+        return;
+    }
+    
+    if (raiz->izquierda == NULL && raiz->derecha == NULL) {
+        // Nodo hoja
+        unsigned char marcador = 1;
+        fwrite(&marcador, sizeof(unsigned char), 1, archivo);
+        fwrite(&raiz->caracter, sizeof(unsigned char), 1, archivo);
+    } else {
+        // Nodo interno
+        unsigned char marcador = 2;
+        fwrite(&marcador, sizeof(unsigned char), 1, archivo);
+        serializar_arbol_recursivo(raiz->izquierda, archivo);
+        serializar_arbol_recursivo(raiz->derecha, archivo);
+    }
+}
+
+// Serializar el árbol de Huffman
+int serializar_arbol(struct Nodo* raiz, FILE* archivo) {
+    if (!raiz || !archivo) return 0;
+    serializar_arbol_recursivo(raiz, archivo);
+    return 1;
+}
+
+// Función auxiliar para deserializar el árbol recursivamente
+struct Nodo* deserializar_arbol_recursivo(FILE* archivo) {
+    unsigned char marcador;
+    fread(&marcador, sizeof(unsigned char), 1, archivo);
+    
+    if (marcador == 0) {
+        return NULL;
+    } else if (marcador == 1) {
+        // Nodo hoja
+        unsigned char caracter;
+        fread(&caracter, sizeof(unsigned char), 1, archivo);
+        return nuevo_nodo(caracter, 0); // La frecuencia no se guarda/recupera
+    } else if (marcador == 2) {
+        // Nodo interno
+        struct Nodo* nodo = nuevo_nodo(0, 0);
+        nodo->izquierda = deserializar_arbol_recursivo(archivo);
+        nodo->derecha = deserializar_arbol_recursivo(archivo);
+        return nodo;
+    }
+    
+    return NULL;
+}
+
+// Deserializar el árbol de Huffman
+struct Nodo* deserializar_arbol(FILE* archivo) {
+    if (!archivo) return NULL;
+    return deserializar_arbol_recursivo(archivo);
+}
