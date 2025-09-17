@@ -98,7 +98,6 @@ int main() {
     free(texto_comprimido);
     free(texto_descomprimido);
     liberar_arbol(raiz);
-    liberar_lista_nodos(&lista_nodos);
 
     return 0;
 }

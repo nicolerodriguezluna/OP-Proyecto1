@@ -2,19 +2,26 @@ CC = gcc
 CFLAGS = -Wall -Iinclude
 SRCDIR = src
 INCDIR = include
-SOURCES = $(SRCDIR)/huffman.c $(SRCDIR)/frecuencias.c $(SRCDIR)/arbol.c
-OBJECTS = $(SOURCES:.c=.o)
-TARGET = huffman
+LIB_SOURCES = $(SRCDIR)/arbol.c $(SRCDIR)/frecuencias.c
+LIB_OBJECTS = $(LIB_SOURCES:.c=.o)
+TARGET_LIB = libhuffman.a
 
-all: $(TARGET)
+TERMINAL_SOURCE = $(SRCDIR)/huffman.c
+TERMINAL_OBJECT = $(TERMINAL_SOURCE:.c=.o)
+TARGET_TERMINAL = huffman-terminal
 
-$(TARGET): $(OBJECTS)
-	$(CC) $(CFLAGS) -o $@ $(OBJECTS)
+all: $(TARGET_LIB) $(TARGET_TERMINAL)
+
+$(TARGET_LIB): $(LIB_OBJECTS)
+	ar rcs $@ $^
+
+$(TARGET_TERMINAL): $(TERMINAL_OBJECT) $(TARGET_LIB)
+	$(CC) $(CFLAGS) -o $@ $(TERMINAL_OBJECT) -L. -lhuffman
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OBJECTS) $(TARGET)
+	rm -f $(LIB_OBJECTS) $(TERMINAL_OBJECT) $(TARGET_LIB) $(TARGET_TERMINAL)
 
 .PHONY: all clean
