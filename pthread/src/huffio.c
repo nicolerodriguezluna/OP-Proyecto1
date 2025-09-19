@@ -1,7 +1,12 @@
+/* ===============================================================================================================
+ * huffio.c — Implementa el formato .hfa (archivo único) y utilidades de empaquetado/desempaquetado de bits.
+ * =============================================================================================================== */
+
 #include "../include/huffio.h"
 #include "../include/io_utils.h"
 #include <errno.h>
 
+/* helpers para escribir/leerdatos enteros en binario. */
 static void put_u16(FILE *f, uint16_t v){ fwrite(&v, sizeof(v), 1, f); }
 static void put_u32(FILE *f, uint32_t v){ fwrite(&v, sizeof(v), 1, f); }
 static void put_u64(FILE *f, uint64_t v){ fwrite(&v, sizeof(v), 1, f); }
@@ -9,24 +14,26 @@ static uint16_t get_u16(FILE *f){ uint16_t v; fread(&v,sizeof(v),1,f); return v;
 static uint32_t get_u32(FILE *f){ uint32_t v; fread(&v,sizeof(v),1,f); return v; }
 static uint64_t get_u64(FILE *f){ uint64_t v; fread(&v,sizeof(v),1,f); return v; }
 
+/* avanza el cursor del FILE* siguiendo el formato de serialización del árbol */
 static int skip_tree(FILE *f) {
     unsigned char m;
     if (fread(&m,1,1,f)!=1) return -1;
     if (m == 0) {
-        return 0;                   
+        return 0;                           /* nodo nulo */
     } else if (m == 1) {
         unsigned char c;
-        if (fread(&c,1,1,f)!=1) return -1;  
+        if (fread(&c,1,1,f)!=1) return -1;  /* hoja + byte de carácter */
         return 0;
     } else if (m == 2) {
-        if (skip_tree(f)!=0) return -1;     
-        if (skip_tree(f)!=0) return -1;     
+        if (skip_tree(f)!=0) return -1;     /* izquierda */
+        if (skip_tree(f)!=0) return -1;     /* derecha */
         return 0;
     } else {
-        return -1;                  
+        return -1;                          /* marcador inválido */
     }
 }
 
+/* copia el árbol serializado e incluye el marcador 0xFF final en un buffer nuevo. */
 static int read_tree_blob(FILE *f, uint8_t **out, size_t *out_len) {
     long start = ftell(f);
     if (start < 0) return -1;
@@ -51,6 +58,7 @@ static int read_tree_blob(FILE *f, uint8_t **out, size_t *out_len) {
     return 0;
 }
 
+/* recorre el .hfa y construye un índice con metadatos y blobs de árbol para cada archivo. */
 int hfa_index(const char *archive_path, hfa_meta_t **out_meta, uint32_t *out_nfiles) {
     FILE *f = fopen(archive_path, "rb");
     if (!f) return -1;
@@ -69,6 +77,7 @@ int hfa_index(const char *archive_path, hfa_meta_t **out_meta, uint32_t *out_nfi
 
         M[i].orig_len   = get_u64(f);
 
+        /* copiar árbol serializado como blob para reconstruirlo por hilo */
         if (read_tree_blob(f, &M[i].tree_blob, &M[i].tree_len)!=0) {
             fclose(f); hfa_free_index(M,i+1); return -1;
         }
@@ -78,6 +87,7 @@ int hfa_index(const char *archive_path, hfa_meta_t **out_meta, uint32_t *out_nfi
         M[i].payload_off= ftell(f);
         if (M[i].payload_off < 0) { fclose(f); hfa_free_index(M,i+1); return -1; }
 
+        /* saltar datos de payload para ubicar siguiente entrada */
         if (fseek(f, (long)M[i].byte_count, SEEK_CUR)!=0) { fclose(f); hfa_free_index(M,i+1); return -1; }
     }
 
@@ -87,6 +97,7 @@ int hfa_index(const char *archive_path, hfa_meta_t **out_meta, uint32_t *out_nfi
     return 0;
 }
 
+/* libera el índice construido por hfa_index. */
 void hfa_free_index(hfa_meta_t *M, uint32_t n){
     if (!M) return;
     for (uint32_t i=0;i<n;i++){
@@ -96,6 +107,7 @@ void hfa_free_index(hfa_meta_t *M, uint32_t n){
     free(M);
 }
 
+/* empaqueta un string de '0'/'1' en un buffer de bytes */
 void pack_bits_from_bitstr(const char *bitstr, uint8_t **out, size_t *out_len, uint64_t *out_bit_count){
     uint64_t bits = (uint64_t)strlen(bitstr);
     size_t bytes = (size_t)((bits + 7) / 8);
@@ -104,13 +116,14 @@ void pack_bits_from_bitstr(const char *bitstr, uint8_t **out, size_t *out_len, u
     for (; bitstr[b]; ++b){
         if (bitstr[b] == '1'){
             size_t byte = (size_t)(b >> 3);
-            int    off  = 7 - (b & 7);          
+            int    off  = 7 - (b & 7);
             buf[byte] |= (1u << off);
         }
     }
     *out = buf; *out_len = bytes; *out_bit_count = bits;
 }
 
+/* expande bytes a un string de '0'/'1' */
 char* unpack_bits_to_bitstr(const uint8_t *buf, size_t len, uint64_t bit_count){
     char *s = (char*)malloc((size_t)bit_count + 1);
     for (uint64_t b=0;b<bit_count;b++){
@@ -122,6 +135,7 @@ char* unpack_bits_to_bitstr(const uint8_t *buf, size_t len, uint64_t bit_count){
     return s;
 }
 
+/* escribe el archivo .hfa con N entradas */
 int hfa_write(const char *archive_path, hfa_entry_t *E, uint32_t n){
     FILE *f = fopen(archive_path, "wb");
     if (!f) return -1;
@@ -137,8 +151,10 @@ int hfa_write(const char *archive_path, hfa_entry_t *E, uint32_t n){
         fwrite(E[i].name, 1, name_len, f);
         put_u64(f, (uint64_t)E[i].txt_len);
 
-        serializar_arbol(E[i].raiz, f);  
+        /* árbol serializado */
+        serializar_arbol(E[i].raiz, f);
 
+        /* datos empaquetados */
         put_u64(f, E[i].bit_count);
         put_u64(f, (uint64_t)E[i].packed_len);
         if (E[i].packed_len){
@@ -150,6 +166,7 @@ int hfa_write(const char *archive_path, hfa_entry_t *E, uint32_t n){
     return (rc==0) ? 0 : -1;
 }
 
+/* descomprime secuencialmente un .hfa a .txt y elimina el .hfa si tuvo éxito. */
 int hfa_read_and_extract(const char *archive_path, const char *dir){
     FILE *f = fopen(archive_path, "rb");
     if (!f) return -1;
@@ -163,7 +180,7 @@ int hfa_read_and_extract(const char *archive_path, const char *dir){
         fread(name,1,name_len,f); name[name_len]='\0';
         uint64_t orig_len = get_u64(f);
 
-        struct Nodo *raiz = deserializar_arbol(f); 
+        struct Nodo *raiz = deserializar_arbol(f);
         if (!raiz){ free(name); fclose(f); return -1; }
 
         uint64_t bit_count = get_u64(f);
@@ -177,7 +194,7 @@ int hfa_read_and_extract(const char *archive_path, const char *dir){
         }
 
         char *bitstr = unpack_bits_to_bitstr(payload, (size_t)byte_count, bit_count);
-        char *texto  = descomprimir_texto(raiz, bitstr, (long)orig_len);  
+        char *texto  = descomprimir_texto(raiz, bitstr, (long)orig_len);
         char out_path[PATH_MAX]; join_path(dir, name, out_path);
         FILE *fo = fopen(out_path, "wb");
         if (fo){ fwrite(texto,1,(size_t)orig_len,fo); fclose(fo); }

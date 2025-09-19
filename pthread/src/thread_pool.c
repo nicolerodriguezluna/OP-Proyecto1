@@ -1,5 +1,10 @@
+/* ===============================================================================================================
+ * thread_pool.c — Implementa un pool de hilos con cola FIFO y espera de finalización.
+ * =============================================================================================================== */
+
 #include "../include/thread_pool.h"
 
+/* bucle de cada hilo del pool. toma trabajos de la cola y los ejecuta */
 static void *worker_loop(void *arg)
 {
     thread_pool_t *tp = (thread_pool_t *)arg;
@@ -35,6 +40,7 @@ static void *worker_loop(void *arg)
     }
 }
 
+/* inicializa mutex/cond, crea threads y pone la cola en estado vacío */
 int tp_init(thread_pool_t *tp, int threads)
 {
     memset(tp, 0, sizeof(*tp));
@@ -54,6 +60,7 @@ int tp_init(thread_pool_t *tp, int threads)
     return 0;
 }
 
+/* pone en la cola un trabajo y despierta un hilo del pool */
 void tp_submit(thread_pool_t *tp, work_fn fn, void *arg)
 {
     work_item_t *it = (work_item_t *)calloc(1, sizeof(work_item_t));
@@ -72,6 +79,7 @@ void tp_submit(thread_pool_t *tp, work_fn fn, void *arg)
     pthread_mutex_unlock(&tp->mtx);
 }
 
+/* bloquea hasta que la cola esté vacía y no queden trabajos activos */
 void tp_wait(thread_pool_t *tp)
 {
     pthread_mutex_lock(&tp->mtx);
@@ -82,6 +90,7 @@ void tp_wait(thread_pool_t *tp)
     pthread_mutex_unlock(&tp->mtx);
 }
 
+/* inicia el cierre, despierta a los hilos y espera su finalización */
 void tp_destroy(thread_pool_t *tp)
 {
     pthread_mutex_lock(&tp->mtx);

@@ -1,9 +1,16 @@
+/* ===============================================================================================================
+ * io_utils.c — Proporciona utilidades de lectura/escritura de archivos y manejo de rutas/listados.
+ * =============================================================================================================== */
+
 #include "../include/io_utils.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
+/* inicializa el vector dinámico de rutas en cero. */
 void sv_init(strvec_t *v) { memset(v, 0, sizeof(*v)); }
+
+/* agrega una copia de un path al vector y redimensiona si es necesario. */
 void sv_push(strvec_t *v, const char *s)
 {
     if (v->len == v->cap)
@@ -15,6 +22,8 @@ void sv_push(strvec_t *v, const char *s)
     }
     v->paths[v->len++] = strdup(s);
 }
+
+/* libera todos los paths almacenados y el contenedor. */
 void sv_free(strvec_t *v)
 {
     for (size_t i = 0; i < v->len; i++)
@@ -22,6 +31,7 @@ void sv_free(strvec_t *v)
     free(v->paths);
 }
 
+/* lee el archivo completoa memoria, agrega '\0', y devuelve tamaño leído. */
 int read_file_text(const char *path, char **out_buf, size_t *out_len)
 {
     FILE *f = fopen(path, "rb");
@@ -54,6 +64,7 @@ int read_file_text(const char *path, char **out_buf, size_t *out_len)
     return 0;
 }
 
+/* escribe exactamente 'len' bytes al archivo destino. */
 int write_file_text(const char *path, const char *buf, size_t len)
 {
     FILE *f = fopen(path, "wb");
@@ -64,6 +75,7 @@ int write_file_text(const char *path, const char *buf, size_t len)
     return wr == len ? 0 : -1;
 }
 
+/* lista archivos con el sufijo dado en 'dir' y los agrega a 'out'. */
 int list_files_with_suffix(const char *dir, const char *suffix, strvec_t *out)
 {
     DIR *d = opendir(dir);
@@ -75,7 +87,7 @@ int list_files_with_suffix(const char *dir, const char *suffix, strvec_t *out)
         char path[PATH_MAX];
         join_path(dir, ent->d_name, path);
 
-        // Ignorar "." y ".."
+        /* Ignora "." y ".." */
         if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0)
         {
             continue;
@@ -87,7 +99,7 @@ int list_files_with_suffix(const char *dir, const char *suffix, strvec_t *out)
 
         if (S_ISDIR(st.st_mode))
         {
-            continue; 
+            continue;
         }
 
         if (!has_suffix(ent->d_name, suffix))
@@ -98,6 +110,7 @@ int list_files_with_suffix(const char *dir, const char *suffix, strvec_t *out)
     return 0;
 }
 
+/* copia 'in' a 'out' y cambia/extiende la extensión por 'new_ext'. */
 void replace_extension(const char *in, const char *new_ext, char out[PATH_MAX])
 {
     strncpy(out, in, PATH_MAX - 1);
@@ -114,6 +127,7 @@ void replace_extension(const char *in, const char *new_ext, char out[PATH_MAX])
     }
 }
 
+/* join_path: compone una ruta 'dir/name' */
 void join_path(const char *dir, const char *name, char out[PATH_MAX])
 {
     size_t ld = strlen(dir);
