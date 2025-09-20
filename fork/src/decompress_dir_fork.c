@@ -104,7 +104,7 @@ int main(int argc, char **argv){
         }
     }
 
-    if (!any_fail) remove(archive_path);
+    /* if (!any_fail) remove(archive_path);*/
 
     clock_gettime(CLOCK_MONOTONIC, &t1);
     printf("[OK] Restauración %s (archivos: %u)%s\n", dir, n, any_fail? " con advertencias": "");

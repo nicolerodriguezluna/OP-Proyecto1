@@ -15,6 +15,7 @@
 #include <errno.h>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <sys/wait.h>  
 #include <unistd.h>
 #include <limits.h>
 #include <time.h>

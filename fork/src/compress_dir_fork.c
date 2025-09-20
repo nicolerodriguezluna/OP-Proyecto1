@@ -170,11 +170,11 @@ int main(int argc, char **argv){
         if (copy_file_into(out, part)!=0){
             fclose(out); sv_free(&files); free(pids); DIE("No se pudo copiar %s", part);
         }
-        remove(part);
+        /*remove(part);*/ 
     }
     fclose(out);
 
-    for (size_t i=0;i<files.len;i++) remove(files.paths[i]);
+    /*for (size_t i=0;i<files.len;i++) remove(files.paths[i]);*/
 
     sv_free(&files);
     free(pids);
