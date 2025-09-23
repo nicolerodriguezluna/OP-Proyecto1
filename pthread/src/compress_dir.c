@@ -24,13 +24,6 @@ typedef struct
     size_t idx;       /* índice de escritura actual */
 } shared_t;
 
-/* libera la tabla de códigos */
-static void free_tabla(char **tabla)
-{
-    for (int i = 0; i < TAM_MAX; i++)
-        free(tabla[i]);
-}
-
 /* función worker que comprime un archivo:
  * - Lee el texto
  * - Calcula frecuencias y construye el árbol de Huffman

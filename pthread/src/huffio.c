@@ -8,10 +8,8 @@
 
 /* helpers para escribir/leerdatos enteros en binario. */
 static void put_u16(FILE *f, uint16_t v){ fwrite(&v, sizeof(v), 1, f); }
-static void put_u32(FILE *f, uint32_t v){ fwrite(&v, sizeof(v), 1, f); }
 static void put_u64(FILE *f, uint64_t v){ fwrite(&v, sizeof(v), 1, f); }
 static uint16_t get_u16(FILE *f){ uint16_t v; fread(&v,sizeof(v),1,f); return v; }
-static uint32_t get_u32(FILE *f){ uint32_t v; fread(&v,sizeof(v),1,f); return v; }
 static uint64_t get_u64(FILE *f){ uint64_t v; fread(&v,sizeof(v),1,f); return v; }
 
 /* avanza el cursor del FILE* siguiendo el formato de serialización del árbol */
@@ -125,6 +123,7 @@ void pack_bits_from_bitstr(const char *bitstr, uint8_t **out, size_t *out_len, u
 
 /* expande bytes a un string de '0'/'1' */
 char* unpack_bits_to_bitstr(const uint8_t *buf, size_t len, uint64_t bit_count){
+    (void)len;
     char *s = (char*)malloc((size_t)bit_count + 1);
     for (uint64_t b=0;b<bit_count;b++){
         size_t byte = (size_t)(b >> 3);
