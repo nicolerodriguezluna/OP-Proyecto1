@@ -26,7 +26,7 @@ static int write_hfa_entry(FILE *out,
     size_t   packed_len = 0;
     uint64_t bit_count  = 0;
     pack_bits_from_bitstr(bitstr, &packed, &packed_len, &bit_count);
-
+    (void)texto;
     size_t name_len = strlen(name);
     if (name_len > UINT16_MAX){ free(packed); return -1; }
     uint16_t n16 = (uint16_t)name_len;

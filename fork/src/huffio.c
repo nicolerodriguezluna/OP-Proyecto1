@@ -9,10 +9,8 @@
 
 /* Escritura/lectura de enteros */
 static void put_u16(FILE *f, uint16_t v){ fwrite(&v, sizeof(v), 1, f); }
-static void put_u32(FILE *f, uint32_t v){ fwrite(&v, sizeof(v), 1, f); }
 static void put_u64(FILE *f, uint64_t v){ fwrite(&v, sizeof(v), 1, f); }
 static uint16_t get_u16(FILE *f){ uint16_t v; fread(&v,sizeof(v),1,f); return v; }
-static uint32_t get_u32(FILE *f){ uint32_t v; fread(&v,sizeof(v),1,f); return v; }
 static uint64_t get_u64(FILE *f){ uint64_t v; fread(&v,sizeof(v),1,f); return v; }
 
 /* Recorre el árbol serializado sin construir nodos para ubicar el final de la estructura. */
